@@ -15,11 +15,21 @@ import 'package:path/path.dart' as path;
 import 'package:dartToJs/index.dart' as dart2js;
 import 'helper.dart' show FlatCompiler;
 
+// import 'package:path_provider/path_provider.dart';
+
 class ArchiveBuilder extends PostProcessBuilder with FlatCompiler {
   @override
   FutureOr<void> build(PostProcessBuildStep buildStep) async {
     final dir = path.join('build', 'fair');
     Directory(dir).createSync(recursive: true);
+
+    stderr.writeln('[Fair Dart2JS] buildStep.inputId.path->${buildStep.inputId.path}, dir->${dir}');
+
+    // Directory appDocDir = await getApplicationDocumentsDirectory();
+    // String appDir = appDocDir.path;
+    //
+    // stderr.writeln('[Fair Dart2JS] appDir->${appDir}');
+
     final bundleName = path.join(
         dir,
         buildStep.inputId.path
@@ -27,6 +37,8 @@ class ArchiveBuilder extends PostProcessBuilder with FlatCompiler {
             .replaceAll('/', '_')
             .replaceAll('\\', '_'));
     final jsName = bundleName.replaceFirst('.json', '.js');
+
+    stderr.writeln('[Fair Dart2JS] jsName->${jsName}, bundleName->${bundleName}');
 
     await dart2JS(buildStep.inputId.path, jsName);
     await compileBundle(buildStep, bundleName);
@@ -43,8 +55,10 @@ class ArchiveBuilder extends PostProcessBuilder with FlatCompiler {
 
   void dart2JS(String input, String jsName) async {
     var partPath = path.join(
-        Directory.current.path, input.replaceFirst('.bundle.json', '.dart'));
+        Directory.current.path, input.replaceFirst('.bundle.json', '.dart').replaceAll('\\', '/'));
     print('\u001b[33m [Fair Dart2JS] partPath => ${partPath} \u001b[0m');
+
+    stderr.writeln('[Fair Dart2JS] Directory.current.path ${Directory.current.path}, partPath => ${partPath}');
     if (File(partPath).existsSync()) {
       try {
         var result = await dart2js.convertFile(partPath, true);
