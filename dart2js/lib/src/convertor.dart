@@ -12,6 +12,9 @@ import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/error/error.dart';
 import 'package:path/path.dart' as p;
 
+import 'package:path/src/style/windows.dart' as win;
+import 'package:file/src/backends/memory/style.dart';
+
 enum ClassOutputTemplateType { raw, pageState }
 
 const superSubstitution = '__super__';
@@ -418,8 +421,14 @@ class ClassDeclarationVisitor
 
   void parseByFile(String filePath) {
     var file = File(filePath);
+
+    var stateFilePath = file.absolute.uri.normalizePath().path;
+    if(p.context.style.name == win.WindowsStyle().name){
+      stateFilePath = p.fromUri(file.absolute.uri);
+    }
+
     var result = parseFile(
-        path: file.absolute.uri.normalizePath().path,
+        path: stateFilePath,
         featureSet: FeatureSet.fromEnableFlags([]));
     result.unit.visitChildren(this);
   }
@@ -566,7 +575,9 @@ class WidgetStateGenerator extends RecursiveAstVisitor<WidgetStateGenerator> {
     var dependencySequences = reserveSequence(imports.length);
     var index = 0;
     imports.forEach((element) {
+          stderr.writeln('[Fair Dart2JS] convertWidgetStateFile stateFilePath04-> ${p.dirname(refererPath)}');
           var absPath = resolvePath(p.dirname(refererPath), element.k1);
+          stderr.writeln('[Fair Dart2JS] convertWidgetStateFile stateFilePath05-> ${absPath}');
           if (dependencyCache.containsKey(absPath)) {
             return;
           }
@@ -678,9 +689,18 @@ class PartJsCodeGenerator extends SimpleAstVisitor<PartJsCodeGenerator> {
 
   void parse(String filePath) {
     var file = File(filePath);
+
+    var stateFilePath = file.absolute.uri.normalizePath().path;
+    if(p.context.style.name == win.WindowsStyle().name){
+      stateFilePath = p.fromUri(file.absolute.uri);
+    }
+    stderr.writeln('[Fair Dart2JS] convertWidgetStateFile stateFilePath03-> ${stateFilePath}, file is exists->${file.existsSync()}');
+
     var result = parseFile(
-        path: file.absolute.uri.normalizePath().path,
+        path: stateFilePath,
         featureSet: FeatureSet.fromEnableFlags([]));
+
+    stderr.writeln('[Fair Dart2JS] convertWidgetStateFile result errors.length-> ${result.errors.length}');
     result.unit.visitChildren(this);
   }
 }
@@ -1793,8 +1813,15 @@ String convertFunction(String code,
 String convertWidgetStateFile(String filePath, [bool isCompressed = false]) {
   var file = File(filePath);
   var stateFilePath = file.absolute.uri.normalizePath().path;
+
+  if(p.context.style.name == win.WindowsStyle().name){
+    stateFilePath = p.fromUri(file.absolute.uri);
+  }
+  stderr.writeln('[Fair Dart2JS] convertWidgetStateFile stateFilePath01-> ${stateFilePath}');
+
   var result = parseFile(
       path: stateFilePath, featureSet: FeatureSet.fromEnableFlags([]));
+
   var visitor = WidgetStateGenerator(stateFilePath);
   result.unit.visitChildren(visitor);
 

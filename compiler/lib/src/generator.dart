@@ -76,10 +76,12 @@ class BindingGenerator extends GeneratorForAnnotation<FairBinding> {
               .where((p) => p.startsWith('package:') && p.endsWith('.dart')),
           (element) async {
         buffer.writeln(element);
+        stderr.writeln('[Fair fair_compiler] generateForAnnotatedElement element-->${element}');
         var str = element
             .toString()
             .substring(0, element.toString().indexOf('\/') + 1);
-        var assetId = AssetId.resolve(element);
+
+        var assetId = AssetId.resolve(Uri.parse(element));
         await _transitSource(buildStep, assetId, dir).then((value) {
           var elements = [];
           value.readAsLinesSync().forEach((element) {
@@ -100,7 +102,7 @@ class BindingGenerator extends GeneratorForAnnotation<FairBinding> {
             list.where((p) => p.startsWith('package:') && p.endsWith('.dart')),
             (element) async {
           buffer.writeln(element);
-          var assetId = AssetId.resolve(element);
+          var assetId = AssetId.resolve(Uri.parse(element));
           await _transitSource(buildStep, assetId, dir);
         });
       }
